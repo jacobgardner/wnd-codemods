@@ -3,7 +3,7 @@ import poop from 'poop';
 const thing = 5;
 
 const dynamic = 'dyn';
-// :WND-CODEMODS: Unable to automatically transform to import
+// TODO: #codemods Unable to automatically transform to import
 const d = require(dynamic);
 
 import env from 'wnd-env';

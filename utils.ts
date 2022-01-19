@@ -1,4 +1,4 @@
 
 export function manualComment(comment: string) {
-  return ` :WND-CODEMODS: ${comment}`;
+  return ` TODO: #codemods ${comment}`;
 }
