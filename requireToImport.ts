@@ -2,7 +2,8 @@
 // import * as t from 'ast-types';
 import {API, ASTNode, CallExpression, FileInfo, ImportDeclaration} from 'jscodeshift';
 import * as util from 'util';
-import { sourceOutput } from './config';
+import {sourceOutput} from './config';
+import { manualComment } from './utils';
 
 // function isRequire(expression: ASTNode): expression is CallExpression {
 //   return (
@@ -15,6 +16,7 @@ import { sourceOutput } from './config';
 interface RequireDetails {
   requireLiteral: string;
   member?: string;
+  unsupported?: boolean;
 }
 
 function extractRequire(expression: ASTNode): RequireDetails | undefined {
@@ -28,7 +30,10 @@ function extractRequire(expression: ASTNode): RequireDetails | undefined {
       expression.arguments[0].type !== 'Literal' ||
       typeof expression.arguments[0].value !== 'string'
     ) {
-      return;
+      return {
+        requireLiteral: '',
+        unsupported: true,
+      };
     }
 
     return {
@@ -78,6 +83,12 @@ export default function transformer(file: FileInfo, api: API) {
       p.value.declarations.forEach((d) => {
         if (d.type === 'VariableDeclarator') {
           const r = extractRequire(d.init);
+
+          if (r && r.unsupported) {
+            bail = true;
+            return;
+          }
+
           if (r) {
             const specifiers = [];
 
@@ -126,6 +137,8 @@ export default function transformer(file: FileInfo, api: API) {
       });
 
       if (bail) {
+        p.value.comments = [j.commentLine(manualComment('Unable to automatically transform to import'))]
+
         return p.value;
       }
 
