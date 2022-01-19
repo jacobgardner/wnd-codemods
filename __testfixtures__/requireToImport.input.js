@@ -5,6 +5,7 @@ const _ = require('lodash'),
 const dynamic = 'dyn';
 const d = require(dynamic);
 
+require('standalone-import');
 const env = require('wnd-env');
 const {errors, shit: fuck} = require('../errors');
 const mdb = require('../../mongodb').mongodb;
@@ -15,3 +16,7 @@ const jobDirectoryApi = require('../../services/jobdirectory-api');
 const {scoringInputs: si} = require('./models');
 const customScoringProfileHelpers = require('../../helpers/customScoringProfile');
 const util = require('util');
+
+function someFunction() {
+  const t = require('lazyImport');
+}

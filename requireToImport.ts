@@ -1,9 +1,17 @@
 //
 // import * as t from 'ast-types';
-import {API, ASTNode, CallExpression, FileInfo, ImportDeclaration} from 'jscodeshift';
+import {
+  API,
+  ASTNode,
+  CallExpression,
+  Collection,
+  FileInfo,
+  ImportDeclaration,
+  VariableDeclaration,
+} from 'jscodeshift';
 import * as util from 'util';
 import {sourceOutput} from './config';
-import { manualComment } from './utils';
+import {manualComment} from './utils';
 
 // function isRequire(expression: ASTNode): expression is CallExpression {
 //   return (
@@ -62,6 +70,19 @@ export default function transformer(file: FileInfo, api: API) {
   const j = api.jscodeshift;
 
   const root = j(file.source);
+
+  root.find(j.ExpressionStatement).filter((p) => !!extractRequire(p.value.expression)).replaceWith(p => {
+
+    const r = extractRequire(p.value.expression);
+
+    if (r && !r.unsupported) {
+      return j.importDeclaration([], j.literal(r.requireLiteral))
+
+    }
+
+    return p.value;
+
+  });
 
   root
     .find(j.VariableDeclaration)
@@ -136,8 +157,16 @@ export default function transformer(file: FileInfo, api: API) {
         }
       });
 
+
+      // Don't automatically convert lazy imports
+      if (p.parent.value.type !== 'Program') {
+        bail = true;
+      }
+      
       if (bail) {
-        p.value.comments = [j.commentLine(manualComment('Unable to automatically transform to import'))]
+        p.value.comments = [
+          j.commentLine(manualComment('Unable to automatically transform to import')),
+        ];
 
         return p.value;
       }
